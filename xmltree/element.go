@@ -376,3 +376,28 @@ func (e *XMLElement) RemoveByTag(attr string) (err error) {
 	}
 	return e.RemoveSpan(index, 1)
 }
+
+// simple way to verify that this element is of the given kind
+func (e *XMLElement) Is(kind string) bool {
+	return e.Name.Local == kind
+}
+
+// simple way to verify that this element is of the given kind
+func (e *XMLElement) MustBe(kind string) (err error) {
+	if !e.Is(kind) {
+		err = fmt.Errorf("invalid element: expected %s but found %s", kind, e.Name.Local)
+	}
+	return
+}
+
+// returns the specified attribute value (ok is true if this attribute was found)
+func (e *XMLElement) Attribute(name string) (value string, ok bool) {
+	for _, attr := range e.Attr {
+		if attr.Name.Local == name {
+			value = attr.Value
+			ok = true
+			return
+		}
+	}
+	return
+}
