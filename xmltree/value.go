@@ -3,7 +3,8 @@ package xmltree
 import (
 	"fmt"
 	"log"
-	"lucky-wolf/xml-tree/etc"
+
+	"github.com/lucky-wolf/xml-tree/etc"
 )
 
 // returns XMLElements only
