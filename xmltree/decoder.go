@@ -1,6 +1,7 @@
 package xmltree
 
 import (
+	"bytes"
 	"encoding/xml"
 	"fmt"
 	"io"
@@ -18,6 +19,28 @@ type Tokenizer interface {
 func SyntaxError(tokenizer Tokenizer, expected, found any) error {
 	line, _ := tokenizer.InputPos()
 	return &xml.SyntaxError{Msg: fmt.Sprintf("expected: %v, found: %v", expected, found), Line: line}
+}
+
+// reads from a file but ignores the version 1.1 (which is not supported)
+// NOTE: golang default xml parser does not support version 1.1, so we simply replace with 1.0
+// warn: this will work for xml files that do not actually use any 1.1 features, otherwise we'll fail to decode it properly
+func LoadFromFileIgnoreVersion(filename string) (tree *XMLTree, err error) {
+
+	// read the entire file
+	contents, err := os.ReadFile(filename)
+	if err != nil {
+		return
+	}
+
+	// replace version 1.1 with 1.0
+	// warn: this will work for xml files that do not actually use any 1.1 features, otherwise we'll fail to decode it properly
+	contents = []byte(strings.Replace(string(contents), `version="1.1"`, `version="1.0"`, 1))
+
+	// now we can tokenize the stream
+	tree = new(XMLTree)
+	err = tree.Read(bytes.NewReader(contents))
+
+	return
 }
 
 // returns an XMLTree by reading in the given file
@@ -55,9 +78,6 @@ func (tree *XMLTree) Decode(tokenizer Tokenizer) (err error) {
 	err = tree.Elements.DecodeRoot(tokenizer)
 	return
 }
-
-// note: from this point forward it seems unlikely that you'd be calling into the library at this level
-// note: but we're leaving it possible because "why not?"
 
 // decodes our root, which can only contain one element, but may contain any number of comments, prodinst, etc.
 // we don't care about such things, but we do our best to faithfully capture them
