@@ -209,10 +209,6 @@ func (e *XMLElement) HasSuffix(tag string, suffix string) bool {
 // visits each child with the given visitor function (aborts on error)
 func (e *XMLElement) VisitChildren(visit func(*XMLElement) error) (err error) {
 
-	if e == nil {
-		return
-	}
-
 	for _, e := range e.Elements() {
 		err = visit(e)
 		if err != nil {
@@ -268,14 +264,15 @@ func (e *XMLElement) CopyAndVisitByTag(tag string, from *XMLElement, visit func(
 }
 
 // sets existing element value if present, returns that element or nil
-func (e *XMLElement) SetChildValue(tag string, value any) *XMLElement {
-	e = e.Child(tag)
-	if e != nil {
-		e.SetValue(value)
+func (e *XMLElement) SetChildValue(tag string, value any) (c *XMLElement, err error) {
+	c = e.Child(tag)
+	if c != nil {
+		c.SetValue(value)
 	} else if value != "" && value != "0" && value != 0 && value != 0.0 {
-		panic(fmt.Errorf("failed to set %s to %v", tag, value))
+		err = fmt.Errorf("failed to set %s to %v", tag, value)
+		return
 	}
-	return e
+	return
 }
 
 // sets existing element value if present, or creates it (appends to parent)
@@ -306,6 +303,7 @@ func (e *XMLElement) ScaleChildBy(tag string, scale float64) (err error) {
 	// child must exist for this to be possible
 	child := e.Child(tag)
 	if child == nil {
+		err = fmt.Errorf("no child %s to scale by %f", tag, scale)
 		return
 	}
 
@@ -324,6 +322,7 @@ func (e *XMLElement) AdjustChildBy(tag string, adjustment float64) (err error) {
 	// child must exist for this to be possible
 	child := e.Child(tag)
 	if child == nil {
+		err = fmt.Errorf("no child %s to adjust by %f", tag, adjustment)
 		return
 	}
 
@@ -332,40 +331,51 @@ func (e *XMLElement) AdjustChildBy(tag string, adjustment float64) (err error) {
 }
 
 // sets one value to be that of another (both must be value types)
-func (e *XMLElement) SetChildToSibling(child, sibling string) {
+func (e *XMLElement) SetChildToSibling(child, sibling string) (err error) {
 
 	// no sibling = nothing to do
 	sib := e.Child(sibling)
 	if sib == nil {
+		err = fmt.Errorf("no sibling %s to set %s to", sibling, child)
 		return
 	}
 
 	// this will ignore the set if the value is effectively a noop & the child doesn't exist
 	// it will panic however if the sibling has a non-zero non-blank value but the child fails to exist
 	e.SetChildValue(child, sib.StringValue())
+	return
 }
 
 // updates it to be scaled by the given input
-func (e *XMLElement) ScaleChildToSiblingBy(tag, siblingtag string, scale float64) {
+func (e *XMLElement) ScaleChildToSiblingBy(tag, siblingtag string, scale float64) (err error) {
+
 	// sibling must exist for this to be possible
 	sibling := e.Child(siblingtag)
 	if sibling == nil {
+		err = fmt.Errorf("no sibling %s to scale %s by", siblingtag, tag)
 		return
 	}
 
 	// child must exist for this to be possible
 	child := e.Child(tag)
 	if child == nil {
+		err = fmt.Errorf("no child %s to scale by %s", tag, siblingtag)
 		return
 	}
 
 	child.SetValue(sibling.FloatValue() * scale)
+	return
 }
 
-// updates it to be scaled by the given input
-func (e *XMLElement) AdjustChildToSiblingBy(child, sibling string, adj float64) {
-	value := e.Child(sibling).FloatValue()
-	e.Child(child).SetValue(value + adj)
+// updates it to be offset by the given input
+func (e *XMLElement) AdjustChildToSiblingBy(child, sibling string, adj float64) (err error) {
+	sib := e.Child(sibling)
+	if sib == nil {
+		err = fmt.Errorf("no sibling %s to adjust %s by", sibling, child)
+		return
+	}
+	e.Child(child).SetValue(sib.FloatValue() + adj)
+	return
 }
 
 // removes the specified child from the given element if present
