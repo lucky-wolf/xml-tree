@@ -22,6 +22,12 @@ var siPrefixes = map[int]string{
 	18:  "E", // exa
 }
 
+// returns the SI prefix for a given exponent, if it exists.
+func SIPrefixForExponent(exp int) (prefix string, ok bool) {
+	prefix, ok = siPrefixes[exp]
+	return
+}
+
 // formats a float64 into a human natural representation.
 // significant controls significant digits.
 // uses engineering notation for large/small numbers, otherwise natural decimal.
@@ -66,33 +72,55 @@ func Naturalize(value float64) (mantissa float64, exp int) {
 	}
 	abs := math.Abs(value)
 
-	// Find nearest engineering exponent
+	// natural cutoff comes first
+	if abs >= 1e-3 && abs < 1e6 {
+		mantissa = value
+		return
+	}
+
+	// find nearest engineering exponent
 	exp = int(math.Floor(math.Log10(abs)/3.0) * 3)
 
-	// Adjust down if the previous exponent gives a more natural mantissa
-	prevExp := exp - 3
-	prevMant := value / math.Pow(10, float64(prevExp))
-	if math.Abs(prevMant) < 1e6 {
-		exp = prevExp
-	}
+	// I've gone around in circles trying to make this better, but I think I'll leave it be for now.
 
-	// Adjust up if the next exponent gives a more natural mantissa (small numbers)
-	nextExp := exp + 3
-	nextMant := value / math.Pow(10, float64(nextExp))
-	if math.Abs(nextMant) >= 1 {
-		exp = nextExp
-	}
+	// if I can make a better natural number formatter, I'll revisit
 
+	// if exp > 0 {
+	// 	// see if we fall within the nautural cutoff for one less exponent (big numbers)
+	// 	mantissa = value / math.Pow(10, float64(exp-3))
+	// 	abs = math.Abs(mantissa)
+	// 	if abs >= 1e-3 && abs < 1e6 {
+	// 		exp -= 3
+	// 		return
+	// 	}
+	// } else if exp < 0 {
+	// 	// see if we fall within the natural cutoff for one more exponent (small numbers)
+	// 	mantissa = value / math.Pow(10, float64(exp+3))
+	// 	abs = math.Abs(mantissa)
+	// 	if abs >= 1e-3 && abs < 1e6 {
+	// 		exp += 3
+	// 		return
+	// 	}
+	// }
+
+	// otherwise, just use the original exponent
 	mantissa = value / math.Pow(10, float64(exp))
 	return
 }
 
-// Exponent formats an Exponent as "eN"
+// Exponent formats an Exponent as "e+-N"
 func Exponent(exp int) string {
-	if exp == 0 {
-		return ""
+	switch {
+	case exp > 9:
+		return "e+" + strconv.Itoa(exp)
+	case exp < -9:
+		return "e-" + strconv.Itoa(-exp)
+	case exp > 0:
+		return "e+0" + strconv.Itoa(exp)
+	case exp < 0:
+		return "e-0" + strconv.Itoa(-exp)
 	}
-	return "e" + strconv.Itoa(exp)
+	return ""
 }
 
 // ExponentToSI formats an exponent as an SI prefix, or falls back to "eN"
@@ -106,19 +134,24 @@ func ExponentToSI(exp int) string {
 	return Exponent(exp)
 }
 
-// formats the mantissa portion of a float with the given number of significant digits
-func Mantissa(value float64, significant int) string {
+func Mantissa(value float64, significant int) (s string) {
 	if value == 0 {
 		return "0"
 	}
 
 	abs := math.Abs(value)
 	exp10 := int(math.Floor(math.Log10(abs)))
-	// digits after decimal = significant - (integer digits)
-	// example: value=468750 -> exp10=5, significant=5 -> digits=significant-exp10-1 = -1 => 0 decimals
+
+	// how many digits after the decimal to give `significant` total
 	digits := max(significant-exp10-1, 0)
 
-	return SimplifyNumber(strconv.FormatFloat(value, 'f', digits, 64))
+	// round to that many places
+	scale := math.Pow(10, float64(digits))
+	rounded := math.Round(value*scale) / scale
+
+	s = strconv.FormatFloat(rounded, 'f', digits, 64)
+	s = SimplifyNumber(s)
+	return
 }
 
 // trims trailing zeros and a trailing decimal point if needed
