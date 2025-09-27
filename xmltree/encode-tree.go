@@ -145,7 +145,7 @@ func (e *XMLElement) Encode(encoder FormattedEncoder) (err error) {
 		}
 	}
 
-	if e.XMLValue.Empty() {
+	if e.Empty() {
 		_, err = encoder.WriteString(" />")
 	} else {
 		// finish the start tag
@@ -155,7 +155,7 @@ func (e *XMLElement) Encode(encoder FormattedEncoder) (err error) {
 		}
 
 		// for anything but a string, we need to start indenting deeper
-		if !e.XMLValue.IsSimple() {
+		if !e.IsSimple() {
 			err = encoder.Indent(true, 1, true)
 			if err != nil {
 				return
@@ -169,7 +169,7 @@ func (e *XMLElement) Encode(encoder FormattedEncoder) (err error) {
 		}
 
 		// for anything but a string, we need to pop out a level and put our end tag there
-		if !e.XMLValue.IsSimple() {
+		if !e.IsSimple() {
 			err = encoder.Indent(true, -1, true)
 			if err != nil {
 				return

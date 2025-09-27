@@ -6,6 +6,8 @@ import (
 	"io"
 	"strconv"
 	"strings"
+
+	"github.com/lucky-wolf/xml-tree/format"
 )
 
 // alternate/replacement library for golang's xml package
@@ -108,6 +110,7 @@ func (e *XMLValue) SetString(value string) {
 
 // set our contents to the given value
 // value can be any kind of scalar or string or an array of any
+// note: we use engineering notation for floats (purely a nicety for XML readability)
 func (e *XMLValue) SetValue(value any) {
 	switch v := value.(type) {
 	case []any:
@@ -116,8 +119,10 @@ func (e *XMLValue) SetValue(value any) {
 		e.SetString(v)
 	case int, int16, int32, int64, int8, uint, uint16, uint32, uint64, uint8:
 		e.SetString(fmt.Sprint(v))
-	case float32, float64:
-		e.SetString(fmt.Sprintf("%.6g", v))
+	case float32:
+		e.SetString(format.Natural(float64(v), 5))
+	case float64:
+		e.SetString(format.Natural(v, 5))
 	default:
 		e.SetString(fmt.Sprint(v))
 	}

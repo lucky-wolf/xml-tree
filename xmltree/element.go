@@ -59,6 +59,58 @@ func (e *XMLElement) Child(tag string) *XMLElement {
 	return nil
 }
 
+// returns the numeic value of the first matching element from the list of elements based on tag (name)
+func (e *XMLElement) Float64ValueOf(tag string) (v float64, err error) {
+	c := e.Child(tag)
+	if c != nil {
+		return c.GetNumericValue()
+	}
+	err = fmt.Errorf("no child with tag %s found in %s", tag, e.Name.Local)
+	return
+}
+
+// returns the string value of the first matching element from the list of elements based on tag (name)
+func (e *XMLElement) StringValueOf(tag string) (v string, err error) {
+	c := e.Child(tag)
+	if c != nil {
+		var ok bool
+		v, ok = c.GetStringValue()
+		if ok {
+			return
+		}
+		err = fmt.Errorf("child %s in %s is not a string", tag, e.Name.Local)
+		return
+	}
+	err = fmt.Errorf("no child with tag %s found in %s", tag, e.Name.Local)
+	return
+}
+
+// returns the int64 value of the first matching element from the list of elements based on tag (name)
+func (e *XMLElement) Int64ValueOf(tag string) (v int64, err error) {
+	c := e.Child(tag)
+	if c != nil {
+		return c.GetInt64Value()
+	}
+	err = fmt.Errorf("no child with tag %s found in %s", tag, e.Name.Local)
+	return
+}
+
+// returns the first matching element from the list of elements based on tag (name) after setting it to the given value
+// if the element is not found, it will be created and set to the given value
+// if the element is found, it will be set to the given value
+func (e *XMLElement) SetAppendChild(tag string, value any) (c *XMLElement, err error) {
+	c = e.Child(tag)
+	if c == nil {
+		c = MakeElement(tag)
+		err = e.Append(c)
+		if err != nil {
+			return
+		}
+	}
+	c.SetValue(value)
+	return
+}
+
 // returns the true index of the given element (index == -1 if not found)
 func (e *XMLElement) ChildIndex(tag string) (index int) {
 
@@ -276,7 +328,7 @@ func (e *XMLElement) SetChildValue(tag string, value any) (c *XMLElement, err er
 }
 
 // sets existing element value if present, or creates it (appends to parent)
-func (e *XMLElement) MakeChildWithValue(tag string, value any) (c *XMLElement, err error) {
+func (e *XMLElement) EnsureChildValue(tag string, value any) (c *XMLElement, err error) {
 
 	c = e.Child(tag)
 
@@ -342,7 +394,10 @@ func (e *XMLElement) SetChildToSibling(child, sibling string) (err error) {
 
 	// this will ignore the set if the value is effectively a noop & the child doesn't exist
 	// it will panic however if the sibling has a non-zero non-blank value but the child fails to exist
-	e.SetChildValue(child, sib.StringValue())
+	_, err = e.SetChildValue(child, sib.StringValue())
+	if err != nil {
+		return
+	}
 	return
 }
 
