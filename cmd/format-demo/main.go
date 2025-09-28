@@ -13,6 +13,8 @@ func main() {
 		desc  string
 		value float64
 	}{
+		{"Fractional", 0.75},
+		{"Small float", 0.0080526},
 		{"Large int", 1234567},
 		{"Zero", 0},
 		{"Small int", 7},
@@ -23,7 +25,6 @@ func main() {
 		{"Pi", 3.1415926535},
 		{"Tiny float", 1e-9},
 		{"Huge float", 1.23e15},
-		{"Fractional", 0.75},
 		{"Recurring decimal", 1.0 / 3.0},
 	}
 

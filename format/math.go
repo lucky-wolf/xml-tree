@@ -81,29 +81,7 @@ func Naturalize(value float64) (mantissa float64, exp int) {
 	// find nearest engineering exponent
 	exp = int(math.Floor(math.Log10(abs)/3.0) * 3)
 
-	// I've gone around in circles trying to make this better, but I think I'll leave it be for now.
-
-	// if I can make a better natural number formatter, I'll revisit
-
-	// if exp > 0 {
-	// 	// see if we fall within the nautural cutoff for one less exponent (big numbers)
-	// 	mantissa = value / math.Pow(10, float64(exp-3))
-	// 	abs = math.Abs(mantissa)
-	// 	if abs >= 1e-3 && abs < 1e6 {
-	// 		exp -= 3
-	// 		return
-	// 	}
-	// } else if exp < 0 {
-	// 	// see if we fall within the natural cutoff for one more exponent (small numbers)
-	// 	mantissa = value / math.Pow(10, float64(exp+3))
-	// 	abs = math.Abs(mantissa)
-	// 	if abs >= 1e-3 && abs < 1e6 {
-	// 		exp += 3
-	// 		return
-	// 	}
-	// }
-
-	// otherwise, just use the original exponent
+	// if the mantissa would be >= 1000, bump the exponent up by 3	// otherwise, just use the original exponent
 	mantissa = value / math.Pow(10, float64(exp))
 	return
 }

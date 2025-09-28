@@ -120,9 +120,9 @@ func (e *XMLValue) SetValue(value any) {
 	case int, int16, int32, int64, int8, uint, uint16, uint32, uint64, uint8:
 		e.SetString(fmt.Sprint(v))
 	case float32:
-		e.SetString(format.Natural(float64(v), 5))
+		e.SetString(format.Natural(float64(v), 6))
 	case float64:
-		e.SetString(format.Natural(v, 5))
+		e.SetString(format.Natural(v, 6))
 	default:
 		e.SetString(fmt.Sprint(v))
 	}
