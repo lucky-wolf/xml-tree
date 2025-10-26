@@ -36,7 +36,7 @@ func Natural(value float64, significant int) (s string) {
 		s = "0"
 		return
 	}
-	mantissa, exp := Naturalize(value)
+	mantissa, exp := Naturalize(value, 1e-3, 1e6)
 	s = Mantissa(mantissa, significant)
 	if exp != 0 {
 		s += Exponent(exp)
@@ -52,7 +52,7 @@ func NaturalSI(value float64, significant int) (s string) {
 		s = "0"
 		return
 	}
-	mantissa, exp := Naturalize(value)
+	mantissa, exp := Naturalize(value, 1e-3, 1e3)
 	s = Mantissa(mantissa, significant)
 	if exp != 0 {
 		if prefix, ok := siPrefixes[exp]; ok {
@@ -66,14 +66,14 @@ func NaturalSI(value float64, significant int) (s string) {
 
 // Naturalize takes a value and returns mantissa + exponent (multiple of 3)
 // such that value = mantissa * 10^exp, with any "human" adjustments applied.
-func Naturalize(value float64) (mantissa float64, exp int) {
+func Naturalize(value, floor, ceiling float64) (mantissa float64, exp int) {
 	if value == 0 {
 		return
 	}
 	abs := math.Abs(value)
 
 	// natural cutoff comes first
-	if abs >= 1e-3 && abs < 1e6 {
+	if abs >= floor && abs < ceiling {
 		mantissa = value
 		return
 	}
