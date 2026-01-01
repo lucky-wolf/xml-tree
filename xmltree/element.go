@@ -442,6 +442,16 @@ func (e *XMLElement) RemoveByTag(attr string) (err error) {
 	return e.RemoveSpan(index, 1)
 }
 
+// removes the child at the specified index (must be a valid index from ChildIndex)
+// returns an error if the index is out of bounds
+// warn: YOU MUST GIVE US INDEXES using ChildIndex, not from Elements()
+func (e *XMLElement) RemoveChildAt(index int) (err error) {
+	if index == -1 {
+		return fmt.Errorf("invalid child index: -1")
+	}
+	return e.RemoveSpan(index, 1)
+}
+
 // simple way to verify that this element is of the given kind
 func (e *XMLElement) Is(kind string) bool {
 	return e.Name.Local == kind

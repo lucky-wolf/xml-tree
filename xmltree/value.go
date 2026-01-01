@@ -35,6 +35,40 @@ func (v *XMLValue) Elements() (elements []*XMLElement) {
 	return
 }
 
+type ElementWithIndex struct {
+	Element   *XMLElement
+	TrueIndex int
+}
+
+// returns XMLElements paired with their true indexes in the contents array
+// this is essential because Elements() filters out comments/directives,
+// so its indexes don't correspond 1:1 with the actual contents array
+// each pair is [element, trueIndex]
+func (v *XMLValue) ElementsWithIndexes() (pairs []ElementWithIndex) {
+	// it is legal to call on a nil value (we simply have no child elements)
+	if v == nil {
+		return
+	}
+
+	// we are either a single or multiple elements
+	switch v := v.contents.(type) {
+	case *XMLElement:
+		// single element at index 0
+		pairs = append(pairs, ElementWithIndex{Element: v, TrueIndex: 0})
+	case []any:
+		// iterate through contents and pair elements with their true index
+		for i, e := range v {
+			if elem, ok := e.(*XMLElement); ok {
+				pairs = append(pairs, ElementWithIndex{Element: elem, TrueIndex: i})
+			}
+		}
+	default:
+		// we have no child elements
+	}
+
+	return
+}
+
 func (v XMLValue) Clone() XMLValue {
 	// v is already a shallow copy, just do a deep copy on the contents
 	v.contents = CloneContents(v.contents)
